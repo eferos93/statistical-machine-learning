@@ -1,5 +1,4 @@
-Package            Version
------------------- -------
+
 attrs              19.3.0 
 backcall           0.1.0  
 bleach             3.1.0  
