@@ -1,10 +1,8 @@
 # Statistical Machine Learning
 
-If you have any problem or find some errors in the notebooks/homeworks please contact me at: **ginevra.carbone@phd.units.it**
+Please use the **dedicated forum on moodle** for questions on theory and exercises.
 
-## News
-
-- uploaded `homework_02`
+If you notice some errors in the notebooks/homeworks contact me at: **ginevra.carbone@phd.units.it**
 
 ## Useful links
 
