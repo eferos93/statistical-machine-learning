@@ -80,7 +80,7 @@ def split_data_set(data_set, output_label: str, index=pd.to_datetime("2020-04-14
 
 X_train, y_train, X_test, y_test, X, y = split_data_set(covid19_normalised, 'swabs')
 
-k1 = 1*RBF(length_scale=50.0)  # Long term trend
+k1 = 50**2*RBF(length_scale=50.0)  # Long term trend
 
 # Create the regressor
 gp0 = GaussianProcessRegressor(kernel=k1, alpha=0.01,
@@ -92,12 +92,12 @@ plot_predictions(gp0, "Cumulative swabs", y, X,)
 
 
 k1 = 50**2 * RBF(length_scale=50.0)
-k4 = 0.1**2 * RBF(length_scale=0.1) \
+k4 = 1**2 * RBF(length_scale=0.1) \
     + WhiteKernel(noise_level=0.5**2,
                   noise_level_bounds=(1e-3, 1e9))  # noise terms
 kernel = k1 + k4
 gp1 = GaussianProcessRegressor(kernel=kernel, alpha=0.01,
-                               normalize_y=True,
+                               normalize_y=False,
                                n_restarts_optimizer=3)
 gp1.fit(X_train, y_train)
 plot_predictions(gp1, 'Cumulative swabs', y, X)
@@ -110,7 +110,7 @@ k4 = 0.1**2 * RBF(length_scale=0.1) \
                   noise_level_bounds=(1e-3, 1e9))  # noise terms
 kernel = k1 + k3 + k4
 gp1 = GaussianProcessRegressor(kernel=kernel, alpha=0.01,
-                               normalize_y=True,
+                               normalize_y=False,
                                n_restarts_optimizer=3)
 gp1.fit(X_train, y_train)
 plot_predictions(gp1, 'Cumulative swabs', y, X)
@@ -118,15 +118,90 @@ plot_predictions(gp1, 'Cumulative swabs', y, X)
 
 k1 = 50.0**2 * RBF(length_scale=50.0)  # long term smooth rising trend
 # medium term irregularities
-k3 = 0.5**2 * RationalQuadratic(length_scale=1.0, alpha=1.0)
+k3 = 50**2 * RationalQuadratic(length_scale=10.0, alpha=10.0)
 k4 = 0.1**2 * RBF(length_scale=0.1) \
     + WhiteKernel(noise_level=0.1**2,
                   noise_level_bounds=(1e-3, 1e9))  # noise terms
 kernel = k1 + k3 + k4
 
 gp_full = GaussianProcessRegressor(kernel=kernel, alpha=0.01,
-                                   normalize_y=True,
+                                   normalize_y=False,
                                    n_restarts_optimizer=3)
 
 gp_full.fit(X_train, y_train)
 plot_predictions(gp_full, 'Cumulative swabs', y, X)
+
+
+covid19_daily_swabs = covid19_cleaned
+# del covid19_daily_swabs
+# covid19_daily_swabs = covid19_cleaned
+# first element after diff() will be NaN, 
+# thus I substitute it with the actual value
+covid19_daily_swabs['swabs'] = covid19_daily_swabs['swabs'].diff().fillna(4324)
+
+
+_ = covid19_daily_swabs.plot()
+
+
+covid19_daily_swabs = covid19_daily_swabs.apply(normalise_column)
+X_train, y_train, X_test, y_test, X, y = split_data_set(covid19_daily_swabs, 'swabs')
+
+
+k1 = 50**2*RBF(length_scale=50.0)  # Long term trend
+
+# Create the regressor
+gp0 = GaussianProcessRegressor(kernel=k1, alpha=0.01,
+                               normalize_y=True,
+                               n_restarts_optimizer=3)
+gp0.fit(X_train, y_train)
+
+plot_predictions(gp0, "Daily swabs", y, X)
+
+
+k1 = 50**2 * RBF(length_scale=50.0)
+k4 = 1**2 * RBF(length_scale=0.1) \
+    + WhiteKernel(noise_level=0.5**2,
+                  noise_level_bounds=(1e-3, 1e9))  # noise terms
+kernel = k1 + k4
+gp1 = GaussianProcessRegressor(kernel=kernel, alpha=0.01,
+                               normalize_y=False,
+                               n_restarts_optimizer=3)
+gp1.fit(X_train, y_train)
+plot_predictions(gp1, 'Daily swabs', y, X)
+plt.savefig('daily_swabs.png')
+
+
+k1 = 50.0**2 * RBF(length_scale=50.0)  # long term smooth rising trend
+# medium term irregularities
+k3 = 50**2 * RationalQuadratic(length_scale=10.0, alpha=10.0)
+k4 = 0.1**2 * RBF(length_scale=0.1) \
+    + WhiteKernel(noise_level=0.1**2,
+                  noise_level_bounds=(1e-3, 1e9))  # noise terms
+kernel = k1 + k3 + k4
+
+gp_full = GaussianProcessRegressor(kernel=kernel, alpha=0.01,
+                                   normalize_y=False,
+                                   n_restarts_optimizer=3)
+
+gp_full.fit(X_train, y_train)
+plot_predictions(gp_full, 'Daily swabs', y, X)
+
+
+k1 = 50.0**2 * RBF(length_scale=50.0)  # long term smooth rising trend
+k2 = 2.0**2 * RBF(length_scale=100.0) \
+    * ExpSineSquared(length_scale=1.0, periodicity=1.0,
+                     periodicity_bounds="fixed")  # seasonal component
+# medium term irregularities
+k3 = 0.5**2 * RationalQuadratic(length_scale=1.0, alpha=1.0)
+k4 = 0.1**2 * RBF(length_scale=0.1) \
+    + WhiteKernel(noise_level=0.1**2,
+                  noise_level_bounds=(1e-3, 1e9))  # noise terms
+kernel = k1 + k2 + k3 + k4
+
+gp_full = GaussianProcessRegressor(kernel=kernel, alpha=0.01,
+                                   normalize_y=True,
+                                   n_restarts_optimizer=3)
+
+gp_full.fit(X_train, y_train)
+plot_predictions(gp_full, 'Daily swabs', y, X)
+plt.savefig('daily_swabs.png')
