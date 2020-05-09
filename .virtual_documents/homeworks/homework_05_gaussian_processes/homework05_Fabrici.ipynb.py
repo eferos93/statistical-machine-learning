@@ -205,3 +205,53 @@ gp_full = GaussianProcessRegressor(kernel=kernel, alpha=0.01,
 gp_full.fit(X_train, y_train)
 plot_predictions(gp_full, 'Daily swabs', y, X)
 plt.savefig('daily_swabs.png')
+
+
+from sklearn.gaussian_process.kernels import DotProduct
+import sklearn.gaussian_process.kernels as kernels
+k_dot = DotProduct()
+
+gp = GaussianProcessRegressor(kernel=k_dot, alpha=0.01,
+                              normalize_y=True,
+                              n_restarts_optimizer=3)
+
+gp.fit(X_train, y_train)
+plot_predictions(gp, 'Daily swabs', y, X)
+plt.savefig('plt_daily swabs.png')
+
+
+k_dot_v2 = kernels.Exponentiation(k_dot, 1.5)
+
+gp = GaussianProcessRegressor(kernel=k_dot_v2, alpha=0.01,
+                              normalize_y=True,
+                              n_restarts_optimizer=3)
+
+gp.fit(X_train, y_train)
+plot_predictions(gp, 'Daily swabs', y, X)
+
+
+k1 = 1000**2 * RBF(length_scale=1.0)
+k2 = 1**(1/2)*kernels.ExpSineSquared(periodicity=1.5, length_scale=10)
+k_dot = DotProduct(sigma_0=1)
+kernel = k1 + 50**10*k_dot + k2
+
+gp = GaussianProcessRegressor(kernel=kernel, alpha=0.01,
+                              normalize_y=True,
+                              n_restarts_optimizer=3)
+gp.fit(X_train, y_train)
+plot_predictions(gp, 'Daily swabs', y, X)
+plt.savefig('plt_daily_swabs.png')
+
+
+k3 = 50**2 * RationalQuadratic(length_scale=1.0, alpha=1.0)
+k1 = 1000**2 * RBF(length_scale=1.0)
+k2 = 1**(1/2)*kernels.ExpSineSquared(periodicity=1.5, length_scale=10)
+k_dot = 50**10*DotProduct(sigma_0=1)
+kernel = k1 + k_dot + k2
+
+gp = GaussianProcessRegressor(kernel=kernel, alpha=0.01,
+                              normalize_y=True,
+                              n_restarts_optimizer=3)
+gp.fit(X_train, y_train)
+plot_predictions(gp, 'Daily swabs', y, X)
+plt.savefig('plt_daily_swabs_v2.png')
