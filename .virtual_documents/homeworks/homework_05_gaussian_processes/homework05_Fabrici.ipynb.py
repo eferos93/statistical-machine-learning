@@ -65,6 +65,9 @@ plot_data(covid19_cleaned.index.values, covid19_cleaned.swabs.values,
 
 
 def split_data_set(data_set, output_label: str, index=pd.to_datetime("2020-04-14")):
+    """
+    Separate the data set fir in train and test set
+    """
     sep_idx = data_set.index.searchsorted(index)
     data_early = data_set.iloc[:sep_idx+1, :]
     # data_later = data_set.iloc[sep_idx:, :]
@@ -101,35 +104,6 @@ gp1 = GaussianProcessRegressor(kernel=kernel, alpha=0.01,
                                n_restarts_optimizer=3)
 gp1.fit(X_train, y_train)
 plot_predictions(gp1, 'Cumulative swabs', y, X)
-
-
-k1 = 50**2 * RBF(length_scale=50.0)
-k3 = 0.5**2 * RationalQuadratic(length_scale=1.0, alpha=1.0)
-k4 = 0.1**2 * RBF(length_scale=0.1) \
-    + WhiteKernel(noise_level=0.1**2,
-                  noise_level_bounds=(1e-3, 1e9))  # noise terms
-kernel = k1 + k3 + k4
-gp1 = GaussianProcessRegressor(kernel=kernel, alpha=0.01,
-                               normalize_y=False,
-                               n_restarts_optimizer=3)
-gp1.fit(X_train, y_train)
-plot_predictions(gp1, 'Cumulative swabs', y, X)
-
-
-k1 = 50.0**2 * RBF(length_scale=50.0)  # long term smooth rising trend
-# medium term irregularities
-k3 = 50**2 * RationalQuadratic(length_scale=10.0, alpha=10.0)
-k4 = 0.1**2 * RBF(length_scale=0.1) \
-    + WhiteKernel(noise_level=0.1**2,
-                  noise_level_bounds=(1e-3, 1e9))  # noise terms
-kernel = k1 + k3 + k4
-
-gp_full = GaussianProcessRegressor(kernel=kernel, alpha=0.01,
-                                   normalize_y=False,
-                                   n_restarts_optimizer=3)
-
-gp_full.fit(X_train, y_train)
-plot_predictions(gp_full, 'Cumulative swabs', y, X)
 
 
 covid19_daily_swabs = covid19_cleaned
@@ -241,17 +215,3 @@ gp = GaussianProcessRegressor(kernel=kernel, alpha=0.01,
 gp.fit(X_train, y_train)
 plot_predictions(gp, 'Daily swabs', y, X)
 plt.savefig('plt_daily_swabs.png')
-
-
-k3 = 50**2 * RationalQuadratic(length_scale=1.0, alpha=1.0)
-k1 = 1000**2 * RBF(length_scale=1.0)
-k2 = 1**(1/2)*kernels.ExpSineSquared(periodicity=1.5, length_scale=10)
-k_dot = 50**10*DotProduct(sigma_0=1)
-kernel = k1 + k_dot + k2
-
-gp = GaussianProcessRegressor(kernel=kernel, alpha=0.01,
-                              normalize_y=True,
-                              n_restarts_optimizer=3)
-gp.fit(X_train, y_train)
-plot_predictions(gp, 'Daily swabs', y, X)
-plt.savefig('plt_daily_swabs_v2.png')
