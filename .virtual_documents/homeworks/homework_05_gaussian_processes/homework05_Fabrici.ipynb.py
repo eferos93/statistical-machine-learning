@@ -5,9 +5,11 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
+import sklearn.gaussian_process.kernels as kernels
 
 
 covid19 = pd.read_csv("COVID_national_20200421.csv")
+# we consider just the number of deaths for predicting as requested in the exercise sheet
 covid19_cleaned = covid19.drop(
     ["ICU", "Unnamed: 0", "new_infections", "hospitalized", "cumulative_infections", "recovered", "quarantined"],
     axis='columns')
@@ -182,7 +184,7 @@ plt.savefig('daily_swabs.png')
 
 
 from sklearn.gaussian_process.kernels import DotProduct
-import sklearn.gaussian_process.kernels as kernels
+
 k_dot = DotProduct()
 
 gp = GaussianProcessRegressor(kernel=k_dot, alpha=0.01,
@@ -210,6 +212,14 @@ k_dot = DotProduct(sigma_0=1)
 kernel = k1 + 50**10*k_dot + k2
 
 gp = GaussianProcessRegressor(kernel=kernel, alpha=0.01,
+                              normalize_y=True,
+                              n_restarts_optimizer=3)
+gp.fit(X_train, y_train)
+plot_predictions(gp, 'Daily swabs', y, X)
+plt.savefig('plt_daily_swabs.png')
+
+
+gp = GaussianProcessRegressor(kernel=kernel, alpha=0.9,
                               normalize_y=True,
                               n_restarts_optimizer=3)
 gp.fit(X_train, y_train)
