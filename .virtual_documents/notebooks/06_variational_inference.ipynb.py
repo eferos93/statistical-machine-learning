@@ -15,7 +15,7 @@ pyro.set_rng_seed(0)
 
 
 # load data from csv and remove NA values
-data = pd.read_csv('data/weatherAUS.csv').dropna()
+data = pd.read_csv("data/weatherAUS.csv").dropna()
 data.info()
 
 
@@ -47,39 +47,40 @@ print("\nx_test.shape =", x_test.shape,"\ny_test.shape =", y_test.shape)
 
 # modelling rain in terms of the predictors
 def sydney_model(predictors, rain):
-
     n_observations, n_predictors = predictors.shape
-    
+
     # sample weights
     w = pyro.sample("w", dist.Normal(torch.zeros(n_predictors), 
                                         torch.ones(n_predictors)))
     b = pyro.sample("b", dist.LogNormal(torch.zeros(1), torch.ones(1)))
-    
+
     yhat = (w*predictors).sum(dim=1) + b
-    
+
     # sample observations noise
-    sigma = pyro.sample("sigma", dist.Uniform(0.,1.))
-    
+    sigma = pyro.sample("sigma", dist.Uniform(0., 1.))
+
     # condition on the observations
     with pyro.plate("rain", len(rain)):
         pyro.sample("obs", dist.Normal(yhat, sigma), obs=rain)
-        
+
+
 def sydney_guide(predictors, rain=None):
-    
     n_observations, n_predictors = predictors.shape
-        
+
     w_loc = pyro.param("w_loc", torch.rand(n_predictors), constraint=constraints.positive)
     w_scale = pyro.param("w_scale", torch.rand(n_predictors), 
                          constraint=constraints.positive)
-    
+
     w = pyro.sample("w", dist.Gamma(w_loc, w_scale))
-    
+
     b_loc = pyro.param("b_loc", torch.rand(1))
     b_scale = pyro.param("b_scale", torch.rand(1), constraint=constraints.positive)
-    
+
     b = pyro.sample("b", dist.LogNormal(b_loc, b_scale))
-    
-    
+
+
+pyro.clear_param_store()
+
 sydney_svi = SVI(model=sydney_model, guide=sydney_guide, 
               optim=optim.ClippedAdam({'lr' : 0.01}), 
               loss=Trace_ELBO()) 
@@ -176,10 +177,11 @@ def log_reg_model(x, y):
     
     # non-linearity
     yhat = torch.sigmoid((w*x).sum(dim=1) + b)
-    
+    print(yhat.shape)
     with pyro.plate("data", n_observations):
         # sampling 0-1 labels from Bernoulli distribution
         y = pyro.sample("y", dist.Bernoulli(yhat), obs=y)
+    print(y.shape)
         
 def log_reg_guide(x, y=None):
     
@@ -201,7 +203,7 @@ log_reg_svi = SVI(model=log_reg_model, guide=log_reg_guide,
               loss=Trace_ELBO()) 
 
 losses = []
-for step in range(10000):
+for step in range(10):
     loss = log_reg_svi.step(x_train, y_train)/len(x_train)
     losses.append(loss)
     if step % 1000 == 0:
